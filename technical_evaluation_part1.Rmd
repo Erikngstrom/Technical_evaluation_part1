@@ -1,0 +1,41 @@
+---
+title: "interview_exercise"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+date: "2024-03-12"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+```
+
+```{r, echo=True}
+df <- read.csv("/Users/erikengstrom/Downloads/samples.txt", sep=",",header=T)
+
+df <- df %>% mutate(Origin = substr(sample, 2, 2))
+
+df2 <- df %>% group_by(Origin) %>%
+  summarize(tot_count = n(),
+            pass_count = sum(pct_covered_bases >= 95),
+            fail_count = sum(pct_covered_bases < 95),
+            pass_percent = pass_count/tot_count*100,
+            fail_percent = fail_count/tot_count*100)
+
+issue_warning <- function(df2) {
+  if (any(df2$fail_percent > 10)) {
+    warning("Warning: At least one row has a fail_percent more than 10%.\n")
+    cat("Rows with fail_percent more than 10%:\n")
+    cat(which(df2$fail_percent > 10), sep = ", ")
+  }
+  return(df2)
+}
+
+df2 %>%
+  issue_warning() %>%
+  write.csv(file = "output_file.csv", row.names = FALSE)
+
+print(df2)
+```
